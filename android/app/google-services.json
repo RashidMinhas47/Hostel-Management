@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "674146958822",
+    "firebase_url": "https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "hostel-management-9b5cc",
+    "storage_bucket": "hostel-management-9b5cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674146958822:android:8ccebd8c38601fb580ea27",
+        "android_client_info": {
+          "package_name": "com.rashid.hostel_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWk7fEGCUXkthqdisei9z-hm437ZbVNRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
