@@ -10,8 +10,11 @@ import 'package:hostel_management/features/authentication/screens/login/email_co
 import 'package:hostel_management/features/authentication/screens/onboarding/onboarding.dart';
 import 'package:hostel_management/features/warden_dashboard/home/warden_nav_menu.dart';
 import 'package:hostel_management/navigation_menu.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:intl/intl.dart';
 
 import '../model/student.dart';
+
 class FirebaseStrings {
   FirebaseStrings._();
   static String students = "Students";
@@ -23,6 +26,7 @@ class FirebaseStrings {
   static String helpCenter = "HelpCenter";
   static String outingLeave = "OutingLeave";
 }
+
 class RegisterWardenController extends GetxController {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
@@ -36,12 +40,58 @@ class RegisterWardenController extends GetxController {
   final isLoading = false.obs;
   final isChecked = true.obs;
 
-  void isToggle(){
+  // Location data
+  final selectedLocation = ''.obs;
+  double? selectedLatitude;
+  double? selectedLongitude;
+
+  void isToggle() {
     isChecked.value = !isChecked.value;
   }
 
+  // Method to handle location selection from Google Places
+  void onLocationSelected(String location, double latitude, double longitude) {
+    addressController.text = location;
+    selectedLocation.value = location;
+    selectedLatitude = latitude;
+    selectedLongitude = longitude;
+  }
+
+  // Method to get coordinates from address (backup method)
+  Future<void> getCoordinatesFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        selectedLatitude = locations.first.latitude;
+        selectedLongitude = locations.first.longitude;
+      }
+    } catch (e) {
+      print('Error getting coordinates: $e');
+    }
+  }
+
+  // Method to format date
+  String formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  // Method to show date picker
+  Future<void> selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      dateController.text = formatDate(picked);
+    }
+  }
+
   final _auth = FirebaseAuth.instance;
-  final _database = FirebaseDatabase.instanceFor(  app: Firebase.app(),
+  final _database = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
     databaseURL: databaseUrl,
   );
 
@@ -50,14 +100,20 @@ class RegisterWardenController extends GetxController {
 
     try {
       // Step 1: Create user with email and password
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
       final String uid = userCredential.user!.uid;
 
-      // Step 2: Prepare student data
+      // Step 2: Get coordinates if not already set
+      if (selectedLatitude == null || selectedLongitude == null) {
+        await getCoordinatesFromAddress(addressController.text.trim());
+      }
+
+      // Step 3: Prepare warden data
       final warden = WardenModel(
         userUid: _auth.currentUser!.uid,
         firstName: firstNameController.text.trim(),
@@ -67,12 +123,20 @@ class RegisterWardenController extends GetxController {
         phone: phoneController.text.trim(),
         date: dateController.text.trim(),
         email: emailController.text.trim(),
-        password: passwordController.text.trim(), // not recommended to store plain passwords
+        password:
+            passwordController.text
+                .trim(), // not recommended to store plain passwords
+        latitude: selectedLatitude,
+        longitude: selectedLongitude,
       );
 
       // Step 3: Save student data to Realtime Database
-      try{
-        await _database.ref().child(FirebaseStrings.wardens).child(uid).set(warden.toJson());
+      try {
+        await _database
+            .ref()
+            .child(FirebaseStrings.wardens)
+            .child(uid)
+            .set(warden.toJson());
         final hostelListRef = _database.ref(FirebaseStrings.hostels);
         final newHostelName = hostelName.text.trim();
 
@@ -87,14 +151,13 @@ class RegisterWardenController extends GetxController {
           if (data is List) {
             updatedList = List<String>.from(data);
           }
-
           // If it's a Map like {0: ..., 1: ...}
           else if (data is Map) {
             updatedList = data.values.map((e) => e.toString()).toList();
           }
         }
 
-// Add the new hostel name if it's not already there
+        // Add the new hostel name if it's not already there
         if (!updatedList.contains(newHostelName)) {
           updatedList.add(newHostelName);
           await hostelListRef.set(updatedList);
@@ -102,16 +165,13 @@ class RegisterWardenController extends GetxController {
 
         print(warden.toJson());
         print(">>>>>>>>>>>>>>>>>Everything is fine<<<<<<<<<<<<<<<");
-
-
-      }catch(e){
+      } catch (e) {
         print(warden.toJson());
         print(e);
       }
       Get.snackbar('Success', 'Student Registered Successfully');
       clearFields();
-      Get.to(()=> EmailConfirmationScreen());
-
+      Get.to(() => EmailConfirmationScreen());
     } on FirebaseAuthException catch (e) {
       print(">>>>>>>>>>>>>>>>>$e<<<<<<<<<<<<<<<");
 

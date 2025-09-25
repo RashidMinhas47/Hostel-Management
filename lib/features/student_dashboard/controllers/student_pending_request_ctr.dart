@@ -1,14 +1,20 @@
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_core/firebase_core.dart';
 import '../../warden_dashboard/controllers/warden_approved_ctr.dart';
+import '../../authentication/controllers/student_signup_ctr.dart';
 
 class StudentPendingRequestController extends GetxController {
   var pendingRequests = <RequestModel>[].obs;
   var approvedRequests = <RequestModel>[].obs;
   var isLoading = true.obs;
 
-  final _dbRef = FirebaseDatabase.instance.ref();
+  final _dbRef =
+      FirebaseDatabase.instanceFor(
+        app: Firebase.app(),
+        databaseURL: databaseUrl,
+      ).ref();
   final _auth = FirebaseAuth.instance;
 
   @override

@@ -54,6 +54,8 @@ class DefaultFirebaseOptions {
     authDomain: 'hostel-management-9b5cc.firebaseapp.com',
     storageBucket: 'hostel-management-9b5cc.firebasestorage.app',
     measurementId: 'G-99GL4D6VF5',
+    databaseURL:
+        'https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

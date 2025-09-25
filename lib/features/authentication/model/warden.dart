@@ -8,6 +8,8 @@ class WardenModel {
   final String password;
   final String userUid;
   final String hostelName;
+  final double? latitude;
+  final double? longitude;
 
   WardenModel({
     required this.firstName,
@@ -19,6 +21,8 @@ class WardenModel {
     required this.password,
     required this.userUid,
     required this.hostelName,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,6 +35,8 @@ class WardenModel {
     'password': password,
     'userUid': userUid,
     'hostelName': hostelName,
+    'latitude': latitude,
+    'longitude': longitude,
   };
 
   factory WardenModel.fromJson(Map<dynamic, dynamic> json) {
@@ -44,6 +50,8 @@ class WardenModel {
       password: json['password'] ?? '',
       userUid: json['userUid'] ?? '',
       hostelName: json['hostelName'] ?? '',
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
     );
   }
 
@@ -57,6 +65,8 @@ class WardenModel {
     String? password,
     String? userUid,
     String? hostelName,
+    double? latitude,
+    double? longitude,
   }) {
     return WardenModel(
       firstName: firstName ?? this.firstName,
@@ -68,6 +78,8 @@ class WardenModel {
       password: password ?? this.password,
       userUid: userUid ?? this.userUid,
       hostelName: hostelName ?? this.hostelName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }

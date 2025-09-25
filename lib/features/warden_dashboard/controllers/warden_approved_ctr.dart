@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hostel_management/features/authentication/controllers/warden_signup_ctr.dart';
+import 'package:hostel_management/features/authentication/controllers/student_signup_ctr.dart';
+
 class RequestModel {
   final String firstName;
   final String lastName;
@@ -69,6 +72,7 @@ class RequestModel {
     final data = snapshot.value as Map<dynamic, dynamic>;
     return RequestModel.fromMap(data);
   }
+
   /// Convert model to JSON
   Map<String, dynamic> toJson() => toMap();
 
@@ -127,26 +131,27 @@ class RequestModel {
   @override
   int get hashCode {
     return firstName.hashCode ^
-    lastName.hashCode ^
-    address.hashCode ^
-    role.hashCode ^
-    phone.hashCode ^
-    email.hashCode ^
-    education.hashCode ^
-    studentCount.hashCode ^
-    hostelName.hashCode ^
-    userUid.hashCode;
+        lastName.hashCode ^
+        address.hashCode ^
+        role.hashCode ^
+        phone.hashCode ^
+        email.hashCode ^
+        education.hashCode ^
+        studentCount.hashCode ^
+        hostelName.hashCode ^
+        userUid.hashCode;
   }
 }
-
-
-
 
 class WardenApprovedRequestController extends GetxController {
   final approvedRequests = <RequestModel>[].obs;
   final isLoading = true.obs;
 
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instanceFor(
+        app: Firebase.app(),
+        databaseURL: databaseUrl,
+      ).ref();
   final userUid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
@@ -158,21 +163,25 @@ class WardenApprovedRequestController extends GetxController {
   void listenToApprovedRequests() {
     isLoading.value = true;
 
-    _dbRef.child(FirebaseStrings.approvedRequests).child(userUid).onValue.listen((event) {
-      final List<RequestModel> updatedList = [];
+    _dbRef
+        .child(FirebaseStrings.approvedRequests)
+        .child(userUid)
+        .onValue
+        .listen((event) {
+          final List<RequestModel> updatedList = [];
 
-      if (event.snapshot.exists) {
-        final data = event.snapshot.value as Map<dynamic, dynamic>;
-        data.forEach((key, value) {
-          if (value['approvedStatus'] == true) {
-            final request = RequestModel.fromMap(value);
-            updatedList.add(request);
+          if (event.snapshot.exists) {
+            final data = event.snapshot.value as Map<dynamic, dynamic>;
+            data.forEach((key, value) {
+              if (value['approvedStatus'] == true) {
+                final request = RequestModel.fromMap(value);
+                updatedList.add(request);
+              }
+            });
           }
-        });
-      }
 
-      approvedRequests.value = updatedList;
-      isLoading.value = false;
-    });
+          approvedRequests.value = updatedList;
+          isLoading.value = false;
+        });
   }
 }

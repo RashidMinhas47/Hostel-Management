@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:hostel_management/features/authentication/controllers/warden_signup_ctr.dart';
+import 'package:hostel_management/features/authentication/controllers/student_signup_ctr.dart';
 
 class PendingRequest {
   final String firstName;
@@ -123,20 +125,24 @@ class PendingRequest {
   @override
   int get hashCode {
     return firstName.hashCode ^
-    lastName.hashCode ^
-    address.hashCode ^
-    role.hashCode ^
-    phone.hashCode ^
-    email.hashCode ^
-    education.hashCode ^
-    studentCount.hashCode ^
-    hostelName.hashCode ^
-    userUid.hashCode;
+        lastName.hashCode ^
+        address.hashCode ^
+        role.hashCode ^
+        phone.hashCode ^
+        email.hashCode ^
+        education.hashCode ^
+        studentCount.hashCode ^
+        hostelName.hashCode ^
+        userUid.hashCode;
   }
 }
 
 class WardenPendingRequestController extends GetxController {
-  final database = FirebaseDatabase.instance.ref();
+  final database =
+      FirebaseDatabase.instanceFor(
+        app: Firebase.app(),
+        databaseURL: databaseUrl,
+      ).ref();
   final RxList<PendingRequest> pendingRequests = <PendingRequest>[].obs;
   final RxBool isLoading = true.obs;
   final RxString userUid = FirebaseAuth.instance.currentUser!.uid.obs;
@@ -155,18 +161,20 @@ class WardenPendingRequestController extends GetxController {
 
     try {
       isLoading.value = true;
-      final snapshot = await database
-          .child(FirebaseStrings.pendingRequests)
-          .child(uid)
-          .get();
+      final snapshot =
+          await database
+              .child(FirebaseStrings.pendingRequests)
+              .child(uid)
+              .get();
 
       if (snapshot.exists) {
         final data = snapshot.value as Map<dynamic, dynamic>;
 
-        pendingRequests.value = data.entries.map((entry) {
-          final request = entry.value as Map<dynamic, dynamic>;
-          return PendingRequest.fromMap(request);
-        }).toList();
+        pendingRequests.value =
+            data.entries.map((entry) {
+              final request = entry.value as Map<dynamic, dynamic>;
+              return PendingRequest.fromMap(request);
+            }).toList();
       } else {
         pendingRequests.clear();
       }
@@ -184,13 +192,18 @@ class WardenPendingRequestController extends GetxController {
   }) async {
     try {
       // Add to approvedRequests
-      await database.child(FirebaseStrings.approvedRequests).child(hostelUid).child(requestKey).set({
-        ...requestData,
-        'approvedStatus': true,
-      });
+      await database
+          .child(FirebaseStrings.approvedRequests)
+          .child(hostelUid)
+          .child(requestKey)
+          .set({...requestData, 'approvedStatus': true});
 
       // Remove from pending
-      await database.child(FirebaseStrings.pendingRequests).child(hostelUid).child(requestKey).remove();
+      await database
+          .child(FirebaseStrings.pendingRequests)
+          .child(hostelUid)
+          .child(requestKey)
+          .remove();
 
       // Remove from UI list
       pendingRequests.removeWhere((req) => req.userUid == requestKey);
@@ -205,7 +218,11 @@ class WardenPendingRequestController extends GetxController {
   }) async {
     try {
       // Just remove from pending
-      await database.child(FirebaseStrings.pendingRequests).child(hostelUid).child(requestKey).remove();
+      await database
+          .child(FirebaseStrings.pendingRequests)
+          .child(hostelUid)
+          .child(requestKey)
+          .remove();
 
       // Remove from UI list
       pendingRequests.removeWhere((req) => req.userUid == requestKey);

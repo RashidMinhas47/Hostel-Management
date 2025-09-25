@@ -13,24 +13,11 @@ import '../../../../../common/widgets/text/t_small_title.dart';
 import '../../../../common/widgets/SizeWidgets/t_gap.dart';
 import '../../../../common/widgets/buttons/t_large_button.dart';
 import '../../../../common/widgets/text_fields/t_text_fields.dart';
+import '../../../../common/widgets/text_fields/t_places_field.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/student_signup_ctr.dart';
-
-import 'package:flutter/material.dart';
-import 'package:hostel_management/common/widgets/appbar/appbar.dart';
-import 'package:hostel_management/features/authentication/controllers/warden_signup_ctr.dart';
-import 'package:hostel_management/utils/constants/colors.dart';
-import 'package:hostel_management/utils/constants/sizes.dart';
-import 'package:hostel_management/utils/devices/device_utility.dart';
 import 'package:hostel_management/utils/validators/validation.dart';
-import '../../../../../common/widgets/text/t_small_title.dart';
-import '../../../../common/widgets/SizeWidgets/t_gap.dart';
-import '../../../../common/widgets/buttons/t_large_button.dart';
-import '../../../../common/widgets/text_fields/t_text_fields.dart';
-import 'package:get/get.dart';
-
-// ... [imports remain the same]
 
 class RegisterWardenScreen extends StatefulWidget {
   const RegisterWardenScreen({super.key});
@@ -77,7 +64,9 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
                         icon: Iconsax.user,
                         hintText: "First Name",
                         controller: controller.firstNameController,
-                        validator: (value) => TFormValidator.isNotEmpty(value, "First Name"),
+                        validator:
+                            (value) =>
+                                TFormValidator.isNotEmpty(value, "First Name"),
                         keyboardType: TextInputType.name,
                       ),
                     ),
@@ -87,7 +76,9 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
                         icon: Iconsax.user,
                         hintText: "Last Name",
                         controller: controller.lastNameController,
-                        validator: (value) => TFormValidator.isNotEmpty(value, "Last Name"),
+                        validator:
+                            (value) =>
+                                TFormValidator.isNotEmpty(value, "Last Name"),
                         keyboardType: TextInputType.name,
                       ),
                     ),
@@ -96,13 +87,14 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
 
                 itemSpace,
 
-                // Address
-                TTextField(
+                // Address with Google Places
+                TPlacesField(
                   icon: Iconsax.location,
-                  hintText: "Address",
+                  hintText: "Hostel Address",
                   controller: controller.addressController,
-                  validator: (value) => TFormValidator.isNotEmpty(value, "Address"),
-                  keyboardType: TextInputType.streetAddress,
+                  validator:
+                      (value) => TFormValidator.isNotEmpty(value, "Address"),
+                  onLocationSelected: controller.onLocationSelected,
                 ),
 
                 itemSpace,
@@ -118,13 +110,26 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
 
                 itemSpace,
 
-                // Date
-                TTextField(
-                  icon: Iconsax.calendar,
-                  hintText: "Date",
-                  controller: controller.dateController,
-                  validator: (value) => TFormValidator.isNotEmpty(value, "Date"),
-                  keyboardType: TextInputType.datetime,
+                // Date Picker
+                GestureDetector(
+                  onTap: () => controller.selectDate(context),
+                  child: AbsorbPointer(
+                    child: TTextField(
+                      icon: Iconsax.calendar,
+                      hintText: "Select Date",
+                      controller: controller.dateController,
+                      validator:
+                          (value) => TFormValidator.isNotEmpty(value, "Date"),
+                      keyboardType: TextInputType.datetime,
+                      suffixIcon: IconButton(
+                        onPressed: () => controller.selectDate(context),
+                        icon: const Icon(
+                          Iconsax.calendar_1,
+                          color: TColors.action,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
 
                 itemSpace,
@@ -134,7 +139,9 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
                   icon: Iconsax.building,
                   hintText: "Hostel Name",
                   controller: controller.hostelName,
-                  validator: (value) => TFormValidator.isNotEmpty(value, "Hostel Name"),
+                  validator:
+                      (value) =>
+                          TFormValidator.isNotEmpty(value, "Hostel Name"),
                   keyboardType: TextInputType.text,
                 ),
 
@@ -153,35 +160,41 @@ class _RegisterWardenScreenState extends State<RegisterWardenScreen> {
 
                 // Password
                 Obx(
-                   () =>
-                     TTextField(
-                      icon: Iconsax.password_check,
-                      hintText: "Password",
-                      controller: controller.passwordController,
-                      validator: TFormValidator.validatePassword,
-                      keyboardType: TextInputType.visiblePassword,
-                      obscureText: controller.isChecked.value,
-                      suffixIcon: IconButton(
-                        onPressed: controller.isToggle,
-                        icon: Icon(controller.isChecked.value ? Iconsax.eye: Iconsax.eye_slash,color: TColors.action,),
+                  () => TTextField(
+                    icon: Iconsax.password_check,
+                    hintText: "Password",
+                    controller: controller.passwordController,
+                    validator: TFormValidator.validatePassword,
+                    keyboardType: TextInputType.visiblePassword,
+                    obscureText: controller.isChecked.value,
+                    suffixIcon: IconButton(
+                      onPressed: controller.isToggle,
+                      icon: Icon(
+                        controller.isChecked.value
+                            ? Iconsax.eye
+                            : Iconsax.eye_slash,
+                        color: TColors.action,
                       ),
-                    )
-
+                    ),
+                  ),
                 ),
 
                 const Gap(y: TSizes.defaultSpace),
 
                 // Register Button
-                Obx(() => controller.isLoading.value
-                    ? const CircularProgressIndicator()
-                    : TLargeButton(
-                  label: 'Register',
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      controller.registerWarden();
-                    }
-                  },
-                )),
+                Obx(
+                  () =>
+                      controller.isLoading.value
+                          ? const CircularProgressIndicator()
+                          : TLargeButton(
+                            label: 'Register',
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                controller.registerWarden();
+                              }
+                            },
+                          ),
+                ),
               ],
             ),
           ),
