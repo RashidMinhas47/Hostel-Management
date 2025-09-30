@@ -8,6 +8,9 @@ class StudentModel {
   final String email;
   final String password;
   final String userUid;
+  final String education;
+  final int studentCount;
+  final String hostelName;
 
   StudentModel({
     required this.firstName,
@@ -17,7 +20,10 @@ class StudentModel {
     required this.date,
     required this.email,
     required this.password,
-    required this.userUid
+    required this.userUid,
+    this.education = '',
+    this.studentCount = 1,
+    this.hostelName = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -29,6 +35,9 @@ class StudentModel {
     'email': email,
     'password': password,
     'userUid' : userUid,
+    'education': education,
+    'studentCount': studentCount,
+    'hostelName': hostelName,
   };
 
   factory StudentModel.fromJson(Map<dynamic, dynamic> json) {
@@ -41,6 +50,11 @@ class StudentModel {
       email: json['email'] ?? '',
       password: json['password'] ?? '',
       userUid: json['userUid'] ?? '',
+      education: json['education'] ?? '',
+      studentCount: (json['studentCount'] is int)
+          ? json['studentCount'] as int
+          : int.tryParse(json['studentCount']?.toString() ?? '1') ?? 1,
+      hostelName: json['hostelName'] ?? '',
     );
   }
   StudentModel copyWith({
@@ -52,6 +66,9 @@ class StudentModel {
     String? email,
     String? password,
     String? userUid,
+    String? education,
+    int? studentCount,
+    String? hostelName,
   }) {
     return StudentModel(
       firstName: firstName ?? this.firstName,
@@ -62,6 +79,9 @@ class StudentModel {
       email: email ?? this.email,
       password: password ?? this.password,
       userUid: userUid ?? this.userUid,
+      education: education ?? this.education,
+      studentCount: studentCount ?? this.studentCount,
+      hostelName: hostelName ?? this.hostelName,
     );
   }
 }

@@ -12,6 +12,7 @@ import '../../../../common/widgets/SizeWidgets/t_gap.dart';
 import '../../../../common/widgets/buttons/t_large_button.dart';
 import '../../../../common/widgets/text/t_mid_title.dart';
 import '../../../../common/widgets/text_fields/t_text_fields.dart';
+import '../../../../common/widgets/dropdwons/t_large_dropdown.dart';
 import '../../../../utils/validators/validation.dart';
 import '../../controllers/student_signup_ctr.dart';
 
@@ -73,6 +74,56 @@ class _RegisterStudentScreenState extends State<RegisterStudentScreen> {
                       ),
                     ),
                   ],
+                ),
+                itemSpace,
+                // Hostel selection
+                Obx(() => TLargeDropDown<String>(
+                  icon: Iconsax.home_2,
+                  value: controller.selectedHostel.value.isEmpty ? null : controller.selectedHostel.value,
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      controller.selectedHostel.value = newValue;
+                      final match = controller.hostelInfoList.firstWhere(
+                        (h) => h['hostelName'] == newValue,
+                        orElse: () => {},
+                      );
+                      if (match.isNotEmpty) {
+                        controller.selectedUid.value = match['userUid'] ?? '';
+                      }
+                    }
+                  },
+                  items: controller.hostelInfoList
+                      .map((hostelMap) => DropdownMenuItem<String>(
+                            value: hostelMap['hostelName'],
+                            child: Text(hostelMap['hostelName'] ?? ''),
+                          ))
+                      .toList(),
+                )),
+                itemSpace,
+                // Student count
+                Obx(() => TLargeDropDown<int>(
+                  icon: Iconsax.personalcard,
+                  value: controller.selectedStudentCount.value,
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      controller.selectedStudentCount.value = newValue;
+                    }
+                  },
+                  items: controller.studentCountOptions
+                      .map((count) => DropdownMenuItem<int>(
+                            value: count,
+                            child: Text('$count ${count == 1 ? 'Student' : 'Students'}'),
+                          ))
+                      .toList(),
+                )),
+                itemSpace,
+                // Education
+                TTextField(
+                  icon: Iconsax.text,
+                  hintText: "Education",
+                  controller: controller.educationController,
+                  validator: (value) => TFormValidator.isNotEmpty(value, "Education"),
+                  keyboardType: TextInputType.text,
                 ),
                 itemSpace,
                 TTextField(

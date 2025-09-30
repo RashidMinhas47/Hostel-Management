@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hostel_management/common/widgets/appbar/appbar.dart';
 import 'package:hostel_management/common/widgets/pending_card.dart';
 import 'package:hostel_management/common/widgets/text/t_mid_title.dart';
+import 'package:hostel_management/common/widgets/buttons/t_large_button.dart';
 import 'package:hostel_management/utils/constants/colors.dart';
 import 'package:hostel_management/utils/constants/sizes.dart';
+import 'package:hostel_management/features/authentication/screens/onboarding/onboarding.dart';
 import '../../../../common/widgets/SizeWidgets/t_gap.dart';
 import '../../../../common/widgets/text/t_small_title.dart';
 import '../../controllers/student_pending_request_ctr.dart';
@@ -46,7 +49,22 @@ class StudentPendingRequestScreen extends StatelessWidget {
                 final hasApproved = approved.isNotEmpty;
 
                 if (!hasPending && !hasApproved) {
-                  return const Center(child: Text("No requests available"));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("No requests available"),
+                        const Gap(y: TSizes.spaceBtwSections),
+                        TLargeButton(
+                          label: 'Logout',
+                          onPressed: () async {
+                            await FirebaseAuth.instance.signOut();
+                            Get.offAll(() => const OnboardScreen());
+                          },
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 return Padding(
@@ -138,6 +156,17 @@ class StudentPendingRequestScreen extends StatelessWidget {
                   ),
                 );
               }),
+            ),
+          ),
+          // Logout button at the bottom
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TLargeButton(
+              label: 'Logout',
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                Get.offAll(() => const OnboardScreen());
+              },
             ),
           ),
         ],

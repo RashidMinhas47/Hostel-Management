@@ -7,6 +7,7 @@ import 'package:hostel_management/features/authentication/controllers/warden_sig
 import 'package:hostel_management/features/authentication/screens/onboarding/onboarding.dart';
 import 'features/warden_dashboard/home/warden_nav_menu.dart';
 import 'navigation_menu.dart';
+import 'features/student_dashboard/screens/pending/studen_pending_request.dart';
 
 class DeciderScreen extends StatefulWidget {
   const DeciderScreen({super.key});
@@ -18,7 +19,9 @@ class DeciderScreen extends StatefulWidget {
 class _DeciderScreenState extends State<DeciderScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseDatabase _database = FirebaseDatabase.instanceFor(
-    databaseURL: 'https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app', app: Firebase.app(),
+    databaseURL:
+        'https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app',
+    app: Firebase.app(),
   );
 
   @override
@@ -26,7 +29,8 @@ class _DeciderScreenState extends State<DeciderScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserAndNavigate();
-    });  }
+    });
+  }
 
   Future<void> _checkUserAndNavigate() async {
     final user = _auth.currentUser;
@@ -43,7 +47,25 @@ class _DeciderScreenState extends State<DeciderScreen> {
 
     final studentSnapshot = await studentRef.get();
     if (studentSnapshot.exists) {
-      Get.offAll(() => const StudentNavigationMenu());
+      // If student exists, check if there is an approved request for this user
+      final approvedRef = _database.ref(FirebaseStrings.approvedRequests);
+      final approvedSnap = await approvedRef.get();
+      bool isApproved = false;
+      if (approvedSnap.exists) {
+        final approvedMap = approvedSnap.value as Map<dynamic, dynamic>;
+        approvedMap.forEach((wardenUid, requestsMap) {
+          if (requestsMap is Map && requestsMap[uid] != null) {
+            isApproved = true;
+          }
+        });
+      }
+
+      if (isApproved) {
+        Get.offAll(() => const StudentNavigationMenu());
+      } else {
+        // Pending state: send to pending requests screen so the student can see status
+        Get.offAll(() => const StudentPendingRequestScreen());
+      }
       return;
     }
 
@@ -59,8 +81,6 @@ class _DeciderScreenState extends State<DeciderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

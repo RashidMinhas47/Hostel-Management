@@ -82,7 +82,7 @@ class TNavBar extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Iconsax.home), label: 'Home'),
             BottomNavigationBarItem(
               icon: Icon(Icons.receipt_outlined),
-              label: 'Pending',
+              label: 'Requests',
             ),
             BottomNavigationBarItem(
               icon: Icon(Iconsax.profile_circle),

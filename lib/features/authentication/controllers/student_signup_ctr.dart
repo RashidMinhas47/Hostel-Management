@@ -3,16 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:hostel_management/decider_screen.dart';
 import 'package:hostel_management/features/authentication/controllers/warden_signup_ctr.dart';
 import 'package:hostel_management/features/authentication/screens/login/email_conformation.dart';
-import 'package:hostel_management/features/authentication/screens/onboarding/onboarding.dart';
-import 'package:hostel_management/navigation_menu.dart';
 
 import '../model/student.dart';
 
-const String databaseUrl = 'https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app';
+const String databaseUrl =
+    'https://hostel-management-9b5cc-default-rtdb.asia-southeast1.firebasedatabase.app';
+
 class RegisterStudentController extends GetxController {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
@@ -21,27 +20,61 @@ class RegisterStudentController extends GetxController {
   final dateController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final educationController = TextEditingController();
+
+  // Hostel related fields
+  RxString selectedHostel = ''.obs;
+  RxString selectedUid = ''.obs;
+  RxList<Map<String, String>> hostelInfoList = <Map<String, String>>[].obs;
+  RxInt selectedStudentCount = 1.obs;
+  final List<int> studentCountOptions = [1, 2, 3, 4, 5];
 
   final isLoading = false.obs;
   final isChecked = true.obs;
-  void isToggle(){
+  void isToggle() {
     isChecked.value = !isChecked.value;
   }
 
   final _auth = FirebaseAuth.instance;
-  final _database = FirebaseDatabase.instanceFor(  app: Firebase.app(),
+  final _database = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
     databaseURL: databaseUrl,
   );
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchHostelList();
+  }
+
+  Future<void> fetchHostelList() async {
+    final ref = _database.ref();
+    final snapshot = await ref.child(FirebaseStrings.wardens).get();
+    if (snapshot.exists) {
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      hostelInfoList.clear();
+      data.forEach((wardenUid, value) {
+        final wardenData = value as Map<dynamic, dynamic>;
+        if (wardenData['hostelName'] != null) {
+          hostelInfoList.add({
+            'hostelName': wardenData['hostelName'].toString(),
+            'userUid': wardenData['userUid'].toString(),
+          });
+        }
+      });
+    }
+  }
 
   void registerStudent() async {
     isLoading.value = true;
 
     try {
       // Step 1: Create user with email and password
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
       final String uid = userCredential.user!.uid;
 
@@ -54,25 +87,58 @@ class RegisterStudentController extends GetxController {
         phone: phoneController.text.trim(),
         date: dateController.text.trim(),
         email: emailController.text.trim(),
-        password: passwordController.text.trim(), // not recommended to store plain passwords
+        password:
+            passwordController.text
+                .trim(), // not recommended to store plain passwords
+        education: educationController.text.trim(),
+        studentCount: selectedStudentCount.value,
+        hostelName: selectedHostel.value,
       );
 
       // Step 3: Save student data to Realtime Database
-try{
-  await _database.ref().child(FirebaseStrings.students).child(uid).set(student.toJson());
-  print(student.toJson());
-  print(">>>>>>>>>>>>>>>>>Everything is fine<<<<<<<<<<<<<<<");
+      try {
+        await _database
+            .ref()
+            .child(FirebaseStrings.students)
+            .child(uid)
+            .set(student.toJson());
+        print(student.toJson());
+        print(">>>>>>>>>>>>>>>>>Everything is fine<<<<<<<<<<<<<<<");
+      } catch (e) {
+        print(student.toJson());
+        print(e);
+      }
+      // Step 4: Create PendingRequest for the selected hostel (if provided)
+      try {
+        if (selectedUid.value.isNotEmpty) {
+          final requestData = {
+            'firstName': student.firstName,
+            'lastName': student.lastName,
+            'address': student.address,
+            'phone': student.phone,
+            'email': student.email,
+            'education': student.education,
+            'studentCount': student.studentCount,
+            'hostelName': student.hostelName,
+            'requestUid': uid,
+            'userUid': uid,
+            'timestamp': DateTime.now().toIso8601String(),
+            'approvedStatus': false,
+          };
 
-
-}catch(e){
-  print(student.toJson());
-  print(e);
-}
+          await _database
+              .ref()
+              .child(FirebaseStrings.pendingRequests)
+              .child(selectedUid.value)
+              .child(uid)
+              .set(requestData);
+        }
+      } catch (e) {
+        print('Error creating pending request: $e');
+      }
       Get.snackbar('Success', 'Verification Email Send Successfully');
       clearFields();
-      Get.to(()=> EmailConfirmationScreen());
-
-
+      Get.to(() => EmailConfirmationScreen());
     } on FirebaseAuthException catch (e) {
       print(">>>>>>>>>>>>>>>>>$e<<<<<<<<<<<<<<<");
 
